@@ -4,17 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="referrer" content="no-referrer-when-downgrade">
-    <title>부산 편의점 지도 조회</title>
+    <title>부산 편의점 지도 - GitHub Pages 서비스</title>
 
-    <!-- Tailwind CSS for modern responsive UI -->
+    <!-- Tailwind CSS for UI responsiveness -->
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Leaflet CSS for reliable open-source interactive map -->
+    <!-- Leaflet Open-Source Interactive Map CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 
-    <!-- Leaflet MarkerCluster CSS for grouping & spiderfying overlapping locations -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+    <!-- Leaflet MarkerCluster CSS for grouping and spiderfying overlapping locations -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css" />
 
     <!-- FontAwesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
@@ -23,17 +23,18 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        #map { height: calc(100vh - 4.5rem); width: 100%; z-index: 10; background-color: #f1f5f9; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        #map { height: calc(100vh - 4.5rem); width: 100%; z-index: 10; background-color: #f8fafc; }
         .leaflet-popup-content-wrapper { border-radius: 1rem; padding: 0.25rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1); }
+        
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-        /* Custom styling for clustered store markers */
+        /* Custom Cluster Icon styling for overlapping stores */
         .custom-cluster-icon {
-            background: rgba(5, 150, 105, 0.92);
+            background: rgba(16, 185, 129, 0.95);
             border: 3px solid #ffffff;
             border-radius: 50%;
             color: #ffffff;
@@ -47,12 +48,13 @@
         }
         .custom-cluster-icon:hover {
             transform: scale(1.12);
-            background: rgba(4, 120, 87, 1);
+            background: rgba(5, 150, 105, 1);
         }
 
-        /* Leaflet 기본 팝업 링크 색상 오버라이드 방지 */
+        /* Force pure white text color for Naver Map button inside Leaflet popups */
         .leaflet-popup-content a.btn-naver,
-        a.btn-naver {
+        .btn-naver,
+        .btn-naver * {
             color: #ffffff !important;
         }
     </style>
@@ -61,27 +63,29 @@
 
     <header class="bg-white border-b border-slate-200 h-18 px-4 md:px-6 py-3 flex items-center justify-between shrink-0 shadow-sm z-20">
         <div class="flex items-center space-x-3">
-            <div class="bg-emerald-600 text-white p-2.5 rounded-xl shadow-md shadow-emerald-200">
+            <div class="bg-emerald-600 text-white p-2.5 rounded-xl shadow-md shadow-emerald-200 flex items-center justify-center">
                 <i class="fa-solid fa-store text-xl"></i>
             </div>
             <div>
                 <h1 class="text-lg md:text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                     부산 편의점 지도
                 </h1>
-                <p class="text-xs text-slate-500 hidden sm:block">부산 지역 편의점 상권 데이터 검색 및 카카오맵·네이버 지도 연동 서비스</p>
+                <p class="text-xs text-slate-500 hidden sm:block">부산 상권 분석 및 카카오맵·네이버 지도앱 연동 서비스</p>
             </div>
         </div>
 
-        <div class="flex items-center space-x-3">
+        <div class="flex items-center space-x-2 md:space-x-3">
+            <!-- Custom CSV File Upload -->
             <label for="csv-file-input" class="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold px-3 py-2 rounded-xl transition flex items-center gap-1.5 border border-slate-200">
                 <i class="fa-solid fa-file-csv text-emerald-600 text-sm"></i>
-                <span class="hidden md:inline">CSV 파일 업로드</span>
+                <span class="hidden sm:inline">CSV 업로드</span>
             </label>
             <input type="file" id="csv-file-input" accept=".csv" class="hidden" />
 
-            <div class="flex items-center space-x-1.5 text-xs md:text-sm text-slate-600 bg-slate-100 px-3 py-1.5 rounded-xl font-medium border border-slate-200">
-                <span>등록 점포:</span>
-                <span id="total-count" class="text-emerald-600 font-bold text-base">0</span>개
+            <!-- Store Counter Badge -->
+            <div class="flex items-center space-x-1 text-xs md:text-sm text-slate-600 bg-slate-100 px-3 py-1.5 rounded-xl font-medium border border-slate-200">
+                <span>점포:</span>
+                <span id="total-count" class="text-emerald-600 font-bold text-sm md:text-base">0</span>개
             </div>
         </div>
     </header>
@@ -95,7 +99,7 @@
                     <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
                         <i class="fa-solid fa-magnifying-glass text-sm"></i>
                     </span>
-                    <input type="text" id="search-input" placeholder="상점명 또는 도로명 주소 검색..." class="w-full pl-10 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm transition">
+                    <input type="text" id="search-input" placeholder="점포명 또는 도로명 주소 검색..." class="w-full pl-10 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm transition">
                     <button id="clear-search" class="hidden absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600">
                         <i class="fa-solid fa-xmark text-sm"></i>
                     </button>
@@ -118,7 +122,7 @@
                 </div>
             </div>
 
-            <!-- Store List Results -->
+            <!-- Store List Container -->
             <div id="store-list" class="flex-1 overflow-y-auto divide-y divide-slate-100 p-2 space-y-1 custom-scrollbar">
                 <div class="p-8 text-center text-slate-400 text-sm">
                     <i class="fa-solid fa-spinner animate-spin text-2xl text-emerald-500 mb-2"></i>
@@ -127,21 +131,21 @@
             </div>
         </aside>
 
-        <!-- Toggle Button for Mobile Navigation -->
+        <!-- Toggle Button for Mobile View -->
         <button id="toggle-sidebar" class="md:hidden absolute bottom-6 left-6 z-40 bg-emerald-600 text-white p-3.5 rounded-full shadow-lg hover:bg-emerald-700 transition active:scale-95">
             <i class="fa-solid fa-list-ul text-lg"></i>
         </button>
 
-        <!-- Leaflet Map Container -->
+        <!-- Leaflet Map Canvas -->
         <div id="map" class="flex-1"></div>
     </main>
 
-    <!-- Leaflet JS -->
+    <!-- Leaflet Map JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <!-- PapaParse for parsing CSV data -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <!-- Leaflet MarkerCluster JS -->
-    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
 
     <script>
         let map;
@@ -149,10 +153,10 @@
         let allStores = [];
         let activeBrandFilter = 'ALL';
 
-        // Busan Center Coordinate
+        // Center coordinate: Busan City Center
         const BUSAN_CENTER = [35.1796, 129.0756];
 
-        // Custom Marker Pin Color Badges
+        // Store Brand Color Themes & Badge Styling
         const BRAND_COLORS = {
             'GS25': { bg: '#007cc4', text: '#ffffff', badge: 'bg-sky-100 text-sky-800 border-sky-200' },
             'CU': { bg: '#832888', text: '#ffffff', badge: 'bg-purple-100 text-purple-800 border-purple-200' },
@@ -168,40 +172,39 @@
         });
 
         function initKoreanMap() {
-            // Create map centered on Busan
+            // Instantiate map centered on Busan
             map = L.map('map', {
                 center: BUSAN_CENTER,
                 zoom: 13,
                 zoomControl: false
             });
 
-            // Re-position zoom control to top right
+            // Position zoom controls top right
             L.control.zoom({ position: 'topright' }).addTo(map);
 
-            // Google Maps Korean Vector Tile Layer (Guaranteed NO 403, 100% Crisp Korean Labels)
+            // Google Maps Korean Vector Tile Layer (Guaranteed NO 403, crisp Korean place names)
             const googleKoreanTile = L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&hl=ko', {
                 subdomains: ['0', '1', '2', '3'],
                 maxZoom: 20,
                 attribution: '&copy; Google Maps'
             });
 
-            // OpenStreetMap Standard Tile Layer as Fallback option
+            // OpenStreetMap Tile Layer as Fallback
             const osmTile = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             });
 
-            // Default layer set to Google Korean Map
             googleKoreanTile.addTo(map);
 
-            // Layer selector control
+            // Layer control switch
             const baseMaps = {
                 "한국어 지도 (Google)": googleKoreanTile,
                 "일반 지도 (OSM)": osmTile
             };
             L.control.layers(baseMaps, null, { position: 'bottomright' }).addTo(map);
 
-            // Marker Cluster layer group (automatically groups close stores & spiderfies overlapping markers)
+            // Marker Cluster layer group with spiderfy feature for overlapping points
             markersGroup = L.markerClusterGroup({
                 spiderfyOnMaxZoom: true,
                 showCoverageOnHover: false,
@@ -220,7 +223,6 @@
         }
 
         function loadEmbeddedData() {
-            // Busan Convenience Stores CSV Data
             const embeddedCSV = `상가업소번호,상호명,지점명,상권업종대분류명,상권업종중분류명,상권업종소분류명,시도명,시군구명,행정동명,법정동명,지번번지,도로명주소,경도,위도
 1,세븐일레븐,부산시청점,소매,종합소매점,편의점,부산광역시,연제구,연산동,연산동,1000-1,부산광역시 연제구 연산로 1,129.0756,35.1796
 2,CU,부산역점,소매,종합소매점,편의점,부산광역시,동구,초량동,초량동,1200-2,부산광역시 동구 중앙대로 206,129.0401,35.1153
@@ -331,10 +333,9 @@
                 const pos = [store.lat, store.lng];
                 bounds.push(pos);
 
-                // Style Marker
                 const brandStyle = BRAND_COLORS[store.brand] || BRAND_COLORS['DEFAULT'];
                 
-                // SVG Circle Pin Marker
+                // SVG Marker Pin Icon
                 const customIcon = L.divIcon({
                     className: 'custom-map-pin',
                     html: `
@@ -348,7 +349,7 @@
 
                 const marker = L.marker(pos, { icon: customIcon });
 
-                // Popup content card with Kakao Maps and Naver Maps integration
+                // Popup card with Kakao Maps and Naver Maps integration (Naver text color explicitly #ffffff)
                 const popupHTML = `
                     <div class="p-2 min-w-[220px]">
                         <div class="flex items-center justify-between mb-1.5 gap-2">
@@ -395,7 +396,7 @@
                     </div>
                 `;
 
-                // Sidebar Click Event Handler (Unfolds spiderfied clusters if overlapping)
+                // Sidebar click interaction (Expands/Spiderfies clustered marker)
                 itemEl.addEventListener('click', () => {
                     if (markersGroup.hasLayer(marker)) {
                         markersGroup.zoomToShowLayer(marker, () => {
@@ -428,7 +429,7 @@
             const sidebar = document.getElementById('sidebar');
             const csvInput = document.getElementById('csv-file-input');
 
-            // Search input handler
+            // Search input listener
             searchInput.addEventListener('input', (e) => {
                 if (e.target.value.trim().length > 0) {
                     clearBtn.classList.remove('hidden');
@@ -445,10 +446,10 @@
                 filterAndRenderStores();
             });
 
-            // District filter change handler
+            // District dropdown change listener
             districtFilter.addEventListener('change', filterAndRenderStores);
 
-            // Brand filter buttons
+            // Brand filter button handlers
             brandButtons.forEach(btn => {
                 btn.addEventListener('click', () => {
                     brandButtons.forEach(b => {
@@ -463,12 +464,12 @@
                 });
             });
 
-            // Mobile sidebar toggle
+            // Mobile menu toggle
             toggleSidebarBtn.addEventListener('click', () => {
                 sidebar.classList.toggle('-translate-x-full');
             });
 
-            // External CSV file upload parser
+            // External CSV file loader
             csvInput.addEventListener('change', (e) => {
                 const file = e.target.files[0];
                 if (file) {
@@ -479,7 +480,7 @@
                             processCSVData(results.data);
                         },
                         error: function(err) {
-                            alert('CSV 파일 처리 실패: ' + err.message);
+                            console.error('CSV 파싱 중 오류:', err);
                         }
                     });
                 }
